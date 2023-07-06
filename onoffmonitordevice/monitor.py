@@ -1,6 +1,7 @@
 """
 Module containing the main monitor program
 """
+import getpass
 import json
 import sys
 from pathlib import Path
@@ -56,7 +57,7 @@ class Monitor:
         password = keyring.get_password(self.keyring_service, self.username)
         while True:
             if password is None:
-                password = input(f'Enter password for {self.username}: ')
+                password = getpass.getpass(f'Enter password for {self.username}: ')
             request = requests.post(
                 self.host + self.login_path + 'login/', auth=(self.username, password), timeout=10)
             response = request.json()
