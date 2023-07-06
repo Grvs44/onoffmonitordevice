@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "504052daa987c51ebe130a0b0b8e6b035e19efbe93b04331d764b29d7fe01453"
+            "sha256": "6d5ca8141484ce3ea79b81e1d2f1e660201fc1be15411b50433a0cd09564f0a8"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -239,6 +239,14 @@
             "index": "pypi",
             "version": "==24.2.0"
         },
+        "keyrings.alt": {
+            "hashes": [
+                "sha256:2ba3d56441ba0637f5f9c096068f67010ac0453f9d0b626de2aa3019353b6431",
+                "sha256:3d25912ed71d6deec85d7e6e867963e1357cd56186a41c9295b86939a5ebf85c"
+            ],
+            "index": "pypi",
+            "version": "==4.2.0"
+        },
         "more-itertools": {
             "hashes": [
                 "sha256:cabaa341ad0389ea83c17a94566a53ae4c9d07349861ecb14dc6d0345cf9ac5d",
@@ -261,6 +269,20 @@
             ],
             "index": "pypi",
             "version": "==2.31.0"
+        },
+        "rpi.gpio": {
+            "hashes": [
+                "sha256:15311d3b063b71dee738cd26570effc9985a952454d162937c34e08c0fc99902",
+                "sha256:26b2ade4bb353bbe5417a64e40b45cdf00a82f27c2d320c0dd46c59751959d77",
+                "sha256:29226823da8b5ccb9001d795a944f2e00924eeae583490f0bc7317581172c624",
+                "sha256:57b6c044ef5375a78c8dda27cdfadf329e76aa6943cd6cffbbbd345a9adf9ca5",
+                "sha256:77afb817b81331ce3049a4b8f94a85e41b7c404d8e56b61ac0f1eb75c3120868",
+                "sha256:96ea7e5bf6bf592828487bfa7d3d1d0e432d5d1682e9e33b4dab398914628fcd",
+                "sha256:b86b66dc02faa5461b443a1e1f0c1d209d64ab5229696f32fb3b0215e0600c8c",
+                "sha256:cd61c4b03c37b62bba4a5acfea9862749c33c618e0295e7e90aa4713fb373b70"
+            ],
+            "index": "pypi",
+            "version": "==0.7.1"
         },
         "secretstorage": {
             "hashes": [
@@ -377,13 +399,6 @@
             ],
             "index": "pypi",
             "version": "==2.17.4"
-        },
-        "rpi-gpio-emu": {
-            "hashes": [
-                "sha256:176caaa42112b31b57b49b10bb720cfa3d65d2a8759e550f2e5d37f102ecd5f5"
-            ],
-            "index": "pypi",
-            "version": "==0.0.1"
         },
         "tomli": {
             "hashes": [

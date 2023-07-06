@@ -6,9 +6,10 @@ name = "pypi"
 [packages]
 requests = "*"
 keyring = "*"
+"rpi.gpio" = "*"
+"keyrings.alt" = "*"
 
 [dev-packages]
-rpi-gpio-emu = "*"
 pylint = "*"
 
 [requires]
