@@ -4,6 +4,7 @@ Module containing the main monitor program
 import getpass
 import json
 import sys
+from time import sleep
 from pathlib import Path
 
 import keyring
@@ -22,7 +23,10 @@ class Monitor:
     def __init__(self, settings_path: str):
         path = self._get_path(settings_path)
         self._process_settings(json.loads(path.read_text()))
+
+    def run(self):
         self._login()
+        self._monitor()
 
     @staticmethod
     def _get_path(settings_path: str):
@@ -35,7 +39,7 @@ class Monitor:
 
     def _process_settings(self, settings: dict):
         errors = []
-        devices = []
+        devices: list[Device] = []
         if not isinstance(settings.get('host'), str):
             errors.append('"host" property missing or not a string')
         if not isinstance(settings.get('username'), str):
@@ -52,6 +56,10 @@ class Monitor:
         self.devices = devices
         self.monitor_path = settings.get('monitorapi', '/api/onoffmonitor/')
         self.login_path = settings.get('loginapi', '/api/')
+        if isinstance(settings.get('sleep'), int):
+            self.sleep_time = settings['sleep']
+        else:
+            self.sleep_time = 2
 
     def _login(self):
         password = keyring.get_password(self.keyring_service, self.username)
@@ -71,3 +79,11 @@ class Monitor:
                 print(response['detail'], file=sys.stderr)
             else:
                 print('Response from server:', response, file=sys.stderr)
+
+    def _monitor(self):
+        while True:
+            for device in self.devices:
+                change = device.check_state_change()
+                if change is not None:
+                    print(change) # send to server
+            sleep(self.sleep_time)

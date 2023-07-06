@@ -19,7 +19,7 @@ def main():
     parser.add_argument('path', help='The path to the configuration JSON file')
     args = parser.parse_args()
     try:
-        Monitor(args.path)
+        Monitor(args.path).run()
     except ValidationError as exc:
         print('\n'.join(exc.args), file=sys.stderr)
     except KeyboardInterrupt:
