@@ -9,6 +9,7 @@ from pathlib import Path
 
 import keyring
 import requests
+import RPi.GPIO as gpio
 
 from .device import Device
 from .exceptions import ValidationError
@@ -23,6 +24,7 @@ class Monitor:
     def __init__(self, settings_path: str):
         path = self._get_path(settings_path)
         self._process_settings(json.loads(path.read_text()))
+        self._token = None
 
     def run(self):
         self._login()
@@ -56,22 +58,20 @@ class Monitor:
         self.devices = devices
         self.monitor_path = settings.get('monitorapi', '/api/onoffmonitor/')
         self.login_path = settings.get('loginapi', '/api/')
-        if isinstance(settings.get('sleep'), int):
-            self.sleep_time = settings['sleep']
-        else:
-            self.sleep_time = 2
 
     def _login(self):
         password = keyring.get_password(self.keyring_service, self.username)
         while True:
             if password is None:
-                password = getpass.getpass(f'Enter password for {self.username}: ')
+                password = getpass.getpass(
+                    f'Enter password for {self.username}: ')
             request = requests.post(
                 self.host + self.login_path + 'login/', auth=(self.username, password), timeout=10)
             response = request.json()
             if 'token' in response:
-                self.token = response['token']
-                keyring.set_password(self.keyring_service, self.username, password)
+                self._token = response['token']
+                keyring.set_password(self.keyring_service,
+                                     self.username, password)
                 print('Logged in')
                 break
             password = None
@@ -81,9 +81,11 @@ class Monitor:
                 print('Response from server:', response, file=sys.stderr)
 
     def _monitor(self):
-        while True:
-            for device in self.devices:
-                change = device.check_state_change()
-                if change is not None:
-                    print(change) # send to server
-            sleep(self.sleep_time)
+        gpio.setmode(gpio.BOARD)
+        for device in self.devices:
+            device.begin(self.on_device_state_change)
+        print('Sleeping')
+        sleep(20)
+
+    def on_device_state_change(self, data):
+        print(data)  # send to server

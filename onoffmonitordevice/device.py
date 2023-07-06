@@ -1,3 +1,5 @@
+from typing import Callable
+
 import RPi.GPIO as gpio
 
 from .exceptions import ValidationError
@@ -8,12 +10,21 @@ class Device:
         if isinstance(setup, dict) and isinstance(setup.get('id'), int) and isinstance(setup.get('pin'), int):
             self._device_id = setup['id']
             self._pin = setup['pin']
-            self._state = False
         else:
             raise ValidationError(f'Invalid device: {setup}')
-    def check_state_change(self):
-        new_state = gpio.input(self._pin)
-        if new_state == self._state:
-            return None
-        self._state = new_state
-        return {'id': self._device_id, 'status': new_state}
+
+    def _serialize_request(self, status: int):
+        return {'id': self._device_id, 'status': status}
+
+    def begin(self, event: Callable):
+        gpio.setup(self._pin, gpio.IN, pull_up_down=gpio.PUD_UP)
+        gpio.add_event_detect(
+            self._pin,
+            gpio.RISING,
+            callback=lambda pin: event(self._serialize_request(1))
+        )
+        gpio.add_event_detect(
+            self._pin,
+            gpio.FALLING,
+            callback=lambda pin: event(self._serialize_request(0))
+        )

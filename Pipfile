@@ -8,6 +8,8 @@ requests = "*"
 keyring = "*"
 
 [dev-packages]
+rpi-gpio-emu = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.10"
