@@ -11,6 +11,7 @@ keyring = "*"
 
 [dev-packages]
 pylint = "*"
+build = "*"
 
 [requires]
 python_version = "3.9"
