@@ -1,3 +1,4 @@
+# pylint:disable=no-member
 from typing import Callable
 
 import RPi.GPIO as gpio
@@ -8,23 +9,24 @@ from .exceptions import ValidationError
 class Device:
     def __init__(self, setup: dict):
         if isinstance(setup, dict) and isinstance(setup.get('id'), int) and isinstance(setup.get('pin'), int):
-            self._device_id = setup['id']
-            self._pin = setup['pin']
+            self._device_id: int = setup['id']
+            self._pin: int = setup['pin']
+            self._state = 0
+            self._event = None
         else:
             raise ValidationError(f'Invalid device: {setup}')
 
-    def _serialize_request(self, status: int):
-        return {'id': self._device_id, 'status': status}
+    def _on_state_change(self, pin):
+        print('on state change', pin)
+        self._state = 1 - self._state
+        if self._event is not None:
+            self._event({'device': self._device_id, 'status': self._state})
 
     def begin(self, event: Callable):
-        gpio.setup(self._pin, gpio.IN, pull_up_down=gpio.PUD_UP)
-        gpio.add_event_detect(
+        self._event = event
+        gpio.setup(self._pin, gpio.IN) # type: ignore
+        gpio.add_event_detect( # type: ignore
             self._pin,
-            gpio.RISING,
-            callback=lambda pin: event(self._serialize_request(1))
-        )
-        gpio.add_event_detect(
-            self._pin,
-            gpio.FALLING,
-            callback=lambda pin: event(self._serialize_request(0))
+            gpio.BOTH, # type: ignore
+            callback=self._on_state_change
         )

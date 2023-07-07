@@ -53,25 +53,25 @@ class Monitor:
             errors.append('"devices" property missing or not a list')
         if len(errors) != 0:
             raise ValidationError(*errors)
-        self.host = settings['host']
-        self.username = settings['username']
-        self.devices = devices
-        self.monitor_path = settings.get('monitorapi', '/api/onoffmonitor/')
-        self.login_path = settings.get('loginapi', '/api/')
+        self._host = settings['host']
+        self._username = settings['username']
+        self._devices = devices
+        self._monitor_path = settings.get('monitorapi', '/api/onoffmonitor/')
+        self._login_path = settings.get('loginapi', '/api/')
 
     def _login(self):
-        password = keyring.get_password(self.keyring_service, self.username)
+        password = keyring.get_password(self.keyring_service, self._username)
         while True:
             if password is None:
                 password = getpass.getpass(
-                    f'Enter password for {self.username}: ')
+                    f'Enter password for {self._username}: ')
             request = requests.post(
-                self.host + self.login_path + 'login/', auth=(self.username, password), timeout=10)
+                self._host + self._login_path + 'login/', auth=(self._username, password), timeout=10)
             response = request.json()
             if 'token' in response:
                 self._token = response['token']
                 keyring.set_password(self.keyring_service,
-                                     self.username, password)
+                                     self._username, password)
                 print('Logged in')
                 break
             password = None
@@ -82,10 +82,15 @@ class Monitor:
 
     def _monitor(self):
         gpio.setmode(gpio.BOARD)
-        for device in self.devices:
+        for device in self._devices:
             device.begin(self.on_device_state_change)
         print('Sleeping')
         sleep(20)
 
     def on_device_state_change(self, data):
-        print(data)  # send to server
+        print('Sending', data)
+        request = requests.post(self._host + self._monitor_path + 'status/', json=data, headers={'Authorization': 'Token ' + self._token})
+        print(request.text)
+
+    def __del__(self):
+        print('del')
