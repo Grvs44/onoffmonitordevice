@@ -19,6 +19,7 @@ class Device:
     def _on_state_change(self, pin):
         print('on state change', pin)
         self._state = 1 - self._state
+        print(self._state, gpio.input(pin))
         if self._event is not None:
             self._event({'device': self._device_id, 'status': self._state})
 
