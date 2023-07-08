@@ -3,7 +3,7 @@ Module containing the main monitor program
 """
 import getpass
 import json
-import sys
+import logging
 from time import sleep
 from pathlib import Path
 
@@ -20,13 +20,16 @@ class Monitor:
     Starts a new monitor program
     """
     keyring_service = 'onoffmonitor'
+    _logger = logging.getLogger(__name__)
 
     def __init__(self, settings_path: str):
+        self._logger.debug('Initialising (%s)', settings_path)
         path = self._get_path(settings_path)
         self._process_settings(json.loads(path.read_text()))
         self._token = None
 
     def run(self):
+        self._logger.debug('Running')
         self._login()
         self._monitor()
 
@@ -40,6 +43,7 @@ class Monitor:
         return path
 
     def _process_settings(self, settings: dict):
+        self._logger.debug('Processing settings')
         errors = []
         devices: list[Device] = []
         if not isinstance(settings.get('host'), str):
@@ -60,6 +64,7 @@ class Monitor:
         self._login_path = settings.get('loginapi', '/api/')
 
     def _login(self):
+        self._logger.debug('Logging in')
         password = keyring.get_password(self.keyring_service, self._username)
         while True:
             if password is None:
@@ -72,13 +77,13 @@ class Monitor:
                 self._token = response['token']
                 keyring.set_password(self.keyring_service,
                                      self._username, password)
-                print('Logged in')
+                self._logger.info('Logged in as %s', self._username)
                 break
             password = None
             if 'detail' in response:
-                print(response['detail'], file=sys.stderr)
+                self._logger.error(response['detail'])
             else:
-                print('Response from server:', response, file=sys.stderr)
+                self._logger.error('Response from server: %s', response)
 
     def _monitor(self):
         gpio.setmode(gpio.BOARD)
@@ -88,9 +93,9 @@ class Monitor:
         sleep(20)
 
     def on_device_state_change(self, data):
-        print('Sending', data)
+        self._logger.debug('Sending %s', str(data))
         request = requests.post(self._host + self._monitor_path + 'status/', json=data, headers={'Authorization': 'Token ' + self._token})
-        print(request.text)
+        self._logger.debug(request.text)
 
     def __del__(self):
         print('del')
