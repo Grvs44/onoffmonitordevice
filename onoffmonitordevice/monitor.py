@@ -104,4 +104,13 @@ class Monitor:
         self._logger.debug(request.text)
 
     def __del__(self):
-        print('del')
+        self._logger.debug('Deleting monitor')
+        self._logout()
+
+    def _logout(self):
+        if self._token == '':
+            self._logger.debug('Already logged out')
+            return
+        self._logger.debug('Logging out')
+        requests.post(self._host + self._login_path + 'logout/', headers={'Authorization': 'Token ' + self._token})
+        self._token = ''
