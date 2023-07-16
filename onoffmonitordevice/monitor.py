@@ -85,7 +85,7 @@ class Monitor:
 
     def _fetch_devices(self):
         self._logger.debug('Fetching device configuration')
-        request = requests.get('%s%sdevice/?monitor=%i' % (self._host, self._monitor_path, self._monitor_id), headers={'Authorization': 'Token ' + self._token})
+        request = requests.get('%s%smonitor/%i/conf/' % (self._host, self._monitor_path, self._monitor_id), headers={'Authorization': 'Token ' + self._token})
         response = request.json()
         for device in response:
             self._devices.append(Device(device))
