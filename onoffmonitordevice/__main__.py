@@ -40,7 +40,7 @@ def main():
     try:
         Monitor(args.path).run()
     except ValidationError as exc:
-        print('\n'.join(exc.args), file=sys.stderr)
+        logging.getLogger(__name__).critical('\n'.join(exc.args))
     except KeyboardInterrupt:
         pass
 

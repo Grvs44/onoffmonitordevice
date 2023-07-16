@@ -25,12 +25,14 @@ class Monitor:
     def __init__(self, settings_path: str):
         self._logger.debug('Initialising (%s)', settings_path)
         path = self._get_path(settings_path)
+        self._devices: list[Device] = []
         self._process_settings(json.loads(path.read_text()))
-        self._token = None
+        self._token = ''
 
     def run(self):
         self._logger.debug('Running')
         self._login()
+        self._fetch_devices()
         self._monitor()
 
     @staticmethod
@@ -45,21 +47,17 @@ class Monitor:
     def _process_settings(self, settings: dict):
         self._logger.debug('Processing settings')
         errors = []
-        devices: list[Device] = []
         if not isinstance(settings.get('host'), str):
             errors.append('"host" property missing or not a string')
         if not isinstance(settings.get('username'), str):
             errors.append('"username" property missing or not a string')
-        if isinstance(settings.get('devices'), list):
-            for device in settings['devices']:
-                devices.append(Device(device))
-        else:
-            errors.append('"devices" property missing or not a list')
+        if not isinstance(settings.get('id'), int):
+            errors.append('"id" property missing or not an integer')
         if len(errors) != 0:
             raise ValidationError(*errors)
         self._host = settings['host']
         self._username = settings['username']
-        self._devices = devices
+        self._monitor_id = settings['id']
         self._monitor_path = settings.get('monitorapi', '/api/onoffmonitor/')
         self._login_path = settings.get('loginapi', '/api/')
 
@@ -84,6 +82,14 @@ class Monitor:
                 self._logger.error(response['detail'])
             else:
                 self._logger.error('Response from server: %s', response)
+
+    def _fetch_devices(self):
+        self._logger.debug('Fetching device configuration')
+        request = requests.get('%s%sdevice/?monitor=%i' % (self._host, self._monitor_path, self._monitor_id), headers={'Authorization': 'Token ' + self._token})
+        response = request.json()
+        for device in response:
+            self._devices.append(Device(device))
+        self._logger.debug('Devices: %s', str(self._devices))
 
     def _monitor(self):
         gpio.setmode(gpio.BOARD)
