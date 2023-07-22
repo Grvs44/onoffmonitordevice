@@ -25,9 +25,9 @@ class Monitor:
     def __init__(self, settings_path: str):
         self._logger.debug('Initialising (%s)', settings_path)
         path = self._get_path(settings_path)
+        self._request_headers = {}
         self._devices: list[Device] = []
         self._process_settings(json.loads(path.read_text()))
-        self._token = ''
 
     def run(self):
         self._logger.debug('Running')
@@ -72,7 +72,7 @@ class Monitor:
                 self._host + self._login_path + 'login/', auth=(self._username, password), timeout=10)
             response = request.json()
             if 'token' in response:
-                self._token = response['token']
+                self._request_headers['Authorization'] = f'Token {response["token"]}'
                 keyring.set_password(self.keyring_service,
                                      self._username, password)
                 self._logger.info('Logged in as %s', self._username)
@@ -85,7 +85,7 @@ class Monitor:
 
     def _fetch_devices(self):
         self._logger.debug('Fetching device configuration')
-        request = requests.get('%s%smonitor/%i/conf/' % (self._host, self._monitor_path, self._monitor_id), headers={'Authorization': 'Token ' + self._token})
+        request = requests.get('%s%smonitor/%i/conf/' % (self._host, self._monitor_path, self._monitor_id), headers=self._request_headers)
         response = request.json()
         for device in response:
             self._devices.append(Device(device))
@@ -100,7 +100,7 @@ class Monitor:
 
     def on_device_state_change(self, data):
         self._logger.debug('Sending %s', str(data))
-        request = requests.post(self._host + self._monitor_path + 'status/', json=data, headers={'Authorization': 'Token ' + self._token})
+        request = requests.post(self._host + self._monitor_path + 'status/', json=data, headers=self._request_headers)
         self._logger.debug(request.text)
 
     def __del__(self):
@@ -108,9 +108,9 @@ class Monitor:
         self._logout()
 
     def _logout(self):
-        if self._token == '':
+        if 'Authorization' not in self._request_headers:
             self._logger.debug('Already logged out')
             return
         self._logger.debug('Logging out')
-        requests.post(self._host + self._login_path + 'logout/', headers={'Authorization': 'Token ' + self._token})
-        self._token = ''
+        requests.post(self._host + self._login_path + 'logout/', headers=self._request_headers)
+        self._request_headers.clear()

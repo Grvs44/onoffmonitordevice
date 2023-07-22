@@ -3,7 +3,6 @@ Module for entry to program
 """
 from argparse import ArgumentParser
 import logging
-import sys
 
 from .monitor import Monitor
 from .exceptions import ValidationError
@@ -40,7 +39,7 @@ def main():
     try:
         Monitor(args.path).run()
     except ValidationError as exc:
-        logging.getLogger(__name__).critical('\n'.join(exc.args))
+        logging.getLogger(__name__).critical('Validation error: %s', '\n'.join(exc.args))
     except KeyboardInterrupt:
         pass
 
