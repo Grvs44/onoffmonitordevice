@@ -8,6 +8,9 @@ from .monitor import Monitor
 from .exceptions import ValidationError
 
 
+_logger = logging.getLogger(__name__)
+
+
 def main():
     """
     Main entry point: parse args and start monitor
@@ -39,9 +42,11 @@ def main():
     try:
         Monitor(args.path).run()
     except ValidationError as exc:
-        logging.getLogger(__name__).critical('Validation error: %s', '\n'.join(exc.args))
+        _logger.critical('Validation error: %s', '\n'.join(exc.args))
     except KeyboardInterrupt:
         pass
+    finally:
+        _logger.debug('Finished')
 
 
 if __name__ == '__main__':
