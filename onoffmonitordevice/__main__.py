@@ -39,13 +39,17 @@ def main():
         level=args.ll,
         filename=args.lf,
     )
+    monitor = None
     try:
-        Monitor(args.path).run()
+        monitor = Monitor(args.path)
+        monitor.run()
     except ValidationError as exc:
         _logger.critical('Validation error: %s', '\n'.join(exc.args))
     except KeyboardInterrupt:
         pass
     finally:
+        if monitor is not None:
+            monitor.stop()
         _logger.debug('Finished')
 
 

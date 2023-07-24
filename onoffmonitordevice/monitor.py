@@ -103,8 +103,8 @@ class Monitor:
         request = requests.post(self._host + self._monitor_path + 'status/', json=data, headers=self._request_headers)
         self._logger.debug(request.text)
 
-    def __del__(self):
-        self._logger.debug('Deleting monitor')
+    def stop(self):
+        self._logger.debug('Stopping')
         self._logout()
 
     def _logout(self):
