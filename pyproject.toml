@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "onoffmonitordevice"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Joe Greaves" },
 ]
 description = "Monitor the on/off status of devices and report to the server"
 readme = "README.md"
-requires-python = ">=3.9,<4"
+requires-python = ">=3.11,<4"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: BSD License",
