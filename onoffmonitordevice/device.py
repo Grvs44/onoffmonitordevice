@@ -12,9 +12,18 @@ class Device:
 
     def __init__(self, setup: dict):
         self._logger.debug('Initialising (%s)', str(setup))
-        if isinstance(setup, dict) and isinstance(setup.get('id'), int) and isinstance(setup.get('gpio_pin'), int):
+        if (
+            isinstance(setup, dict)
+            and isinstance(setup.get('id'), int)
+            and isinstance(setup.get('gpio_input'), int)
+        ):
             self._device_id: int = setup['id']
-            self._pin: int = setup['gpio_pin']
+            self._input: int = setup['gpio_input']
+            led = setup.get('gpio_led')
+            if isinstance(led, int):
+                self._led = led
+            else:
+                self._led = None
             self._state = 0
             self._event = None
         else:
@@ -24,18 +33,22 @@ class Device:
         self._logger.debug('Pin %i state change', pin)
         self._state = 1 - self._state
         print(self._state, gpio.input(pin))
+        if self._led is not None:
+            gpio.output(self._led, self._state)
         if self._event is not None:
             self._event({'device': self._device_id, 'status': self._state})
 
     def begin(self, event: Callable):
-        self._logger.debug('Pin %i: begin', self._pin)
+        self._logger.debug('Pin %i: begin', self._input)
         self._event = event
-        gpio.setup(self._pin, gpio.IN)  # type: ignore
+        gpio.setup(self._input, gpio.IN)  # type: ignore
+        if self._led is not None:
+            gpio.setup(self._led, gpio.OUT)
         gpio.add_event_detect(  # type: ignore
-            self._pin,
+            self._input,
             gpio.BOTH,  # type: ignore
             callback=self._on_state_change
         )
 
     def __repr__(self):
-        return f'Device({{"id": {self._device_id}, "gpio_pin": {self._pin}}})'
+        return f"Device({{'id': {self._device_id}, 'gpio_input': {self._input}, 'gpio_led': {self._led}}})"
