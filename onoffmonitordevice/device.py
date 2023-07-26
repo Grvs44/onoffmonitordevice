@@ -41,12 +41,12 @@ class Device:
     def begin(self, event: Callable):
         self._logger.debug('Pin %i: begin', self._input)
         self._event = event
-        gpio.setup(self._input, gpio.IN)  # type: ignore
+        gpio.setup(self._input, gpio.IN)
         if self._led is not None:
             gpio.setup(self._led, gpio.OUT)
-        gpio.add_event_detect(  # type: ignore
+        gpio.add_event_detect(
             self._input,
-            gpio.BOTH,  # type: ignore
+            gpio.BOTH,
             callback=self._on_state_change
         )
 

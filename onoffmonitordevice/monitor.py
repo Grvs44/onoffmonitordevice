@@ -1,6 +1,7 @@
 """
 Module containing the main monitor program
 """
+# pylint:disable=no-member
 import getpass
 import json
 import logging
@@ -30,6 +31,9 @@ class Monitor:
         self._process_settings(json.loads(path.read_text()))
 
     def run(self):
+        '''
+        Start running this Monitor
+        '''
         self._logger.debug('Running')
         self._login()
         self._fetch_devices()
@@ -60,6 +64,7 @@ class Monitor:
         self._monitor_id = settings['id']
         self._monitor_path = settings.get('monitorapi', '/api/onoffmonitor/')
         self._login_path = settings.get('loginapi', '/api/')
+        self._status_path = f'{self._host}{self._monitor_path}status/'
 
     def _login(self):
         self._logger.debug('Logging in')
@@ -69,7 +74,10 @@ class Monitor:
                 password = getpass.getpass(
                     f'Enter password for {self._username}: ')
             request = requests.post(
-                self._host + self._login_path + 'login/', auth=(self._username, password), timeout=10)
+                f'{self._host}{self._login_path}login/',
+                auth=(self._username, password),
+                timeout=10
+            )
             response = request.json()
             if 'token' in response:
                 self._request_headers['Authorization'] = f'Token {response["token"]}'
@@ -85,7 +93,11 @@ class Monitor:
 
     def _fetch_devices(self):
         self._logger.debug('Fetching device configuration')
-        request = requests.get('%s%smonitor/%i/conf/' % (self._host, self._monitor_path, self._monitor_id), headers=self._request_headers)
+        request = requests.get(
+            f'{self._host}{self._monitor_path}monitor/{self._monitor_id}/conf/',
+            headers=self._request_headers,
+            timeout=10
+        )
         response = request.json()
         for device in response:
             self._devices.append(Device(device))
@@ -99,12 +111,24 @@ class Monitor:
         sleep(20)
 
     def on_device_state_change(self, data):
+        '''
+        Event handler for device state change
+        '''
         self._logger.debug('Sending %s', str(data))
-        request = requests.post(self._host + self._monitor_path + 'status/', json=data, headers=self._request_headers)
+        request = requests.post(
+            self._status_path,
+            json=data,
+            headers=self._request_headers,
+            timeout=10
+        )
         self._logger.debug(request.text)
 
     def stop(self):
+        '''
+        Stop running this Monitor
+        '''
         self._logger.debug('Stopping')
+        gpio.cleanup()
         self._logout()
 
     def _logout(self):
@@ -112,5 +136,8 @@ class Monitor:
             self._logger.debug('Already logged out')
             return
         self._logger.debug('Logging out')
-        requests.post(self._host + self._login_path + 'logout/', headers=self._request_headers)
-        self._request_headers.clear()
+        requests.post(
+            f'{self._host}{self._login_path}logout/',
+            headers=self._request_headers,
+            timeout=10
+        )
