@@ -1,3 +1,6 @@
+'''
+Module for managing a device
+'''
 # pylint:disable=no-member
 import logging
 from typing import Callable
@@ -8,6 +11,9 @@ from .exceptions import ValidationError
 
 
 class Device:
+    '''
+    Manage the state, GPIO pin(s), and events of a device
+    '''
     _logger = logging.getLogger(__name__)
 
     def __init__(self, setup: dict):
@@ -39,6 +45,9 @@ class Device:
             self._event({'device': self._device_id, 'status': self._state})
 
     def begin(self, event: Callable):
+        '''
+        Set up the GPIO pin(s) and add events
+        '''
         self._logger.debug('Pin %i: begin', self._input)
         self._event = event
         gpio.setup(self._input, gpio.IN)
