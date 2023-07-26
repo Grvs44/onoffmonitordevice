@@ -22,12 +22,14 @@ class Monitor:
     """
     keyring_service = 'onoffmonitor'
     _logger = logging.getLogger(__name__)
+    gpio_modes = (gpio.BOARD, gpio.BCM)
 
     def __init__(self, settings_path: str):
         self._logger.debug('Initialising (%s)', settings_path)
         path = self._get_path(settings_path)
         self._request_headers = {}
         self._devices: list[Device] = []
+        self._gpio_mode = gpio.BOARD
         self._process_settings(json.loads(path.read_text()))
 
     def run(self):
@@ -36,7 +38,7 @@ class Monitor:
         '''
         self._logger.debug('Running')
         self._login()
-        self._fetch_devices()
+        self._fetch_conf()
         self._monitor()
 
     @staticmethod
@@ -91,20 +93,24 @@ class Monitor:
             else:
                 self._logger.error('Response from server: %s', response)
 
-    def _fetch_devices(self):
-        self._logger.debug('Fetching device configuration')
+    def _fetch_conf(self):
+        self._logger.debug('Fetching monitor configuration')
         request = requests.get(
             f'{self._host}{self._monitor_path}monitor/{self._monitor_id}/conf/',
             headers=self._request_headers,
             timeout=10
         )
         response = request.json()
-        for device in response:
+        gpio_mode = response.get('gpio_mode')
+        if isinstance(gpio_mode, int) and 0 <= gpio_mode < len(self.gpio_modes):
+            self._gpio_mode = self.gpio_modes[gpio_mode]
+        self._logger.debug('GPIO mode: %i', self._gpio_mode)
+        for device in response.get('devices', []):
             self._devices.append(Device(device))
-        self._logger.debug('Devices: %s', str(self._devices))
+        self._logger.debug('Devices: %s', self._devices)
 
     def _monitor(self):
-        gpio.setmode(gpio.BOARD)
+        gpio.setmode(self._gpio_mode)
         for device in self._devices:
             device.begin(self.on_device_state_change)
         print('Sleeping')
@@ -114,7 +120,7 @@ class Monitor:
         '''
         Event handler for device state change
         '''
-        self._logger.debug('Sending %s', str(data))
+        self._logger.debug('Sending %s', data)
         request = requests.post(
             self._status_path,
             json=data,

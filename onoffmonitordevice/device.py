@@ -11,7 +11,7 @@ class Device:
     _logger = logging.getLogger(__name__)
 
     def __init__(self, setup: dict):
-        self._logger.debug('Initialising (%s)', str(setup))
+        self._logger.debug('Initialising (%s)', setup)
         if (
             isinstance(setup, dict)
             and isinstance(setup.get('id'), int)
